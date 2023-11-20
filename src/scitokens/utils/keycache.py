@@ -161,9 +161,9 @@ class KeyCache(object):
         if row != None:
             if row['keydata'] == '':
                 # Negative Cache Handling
-                if not force_refresh or row['next_update'] > time.time():
+                if not force_refresh and row['next_update'] > time.time():
                     logger = logging.getLogger("scitokens")
-                    logger.warning("Retry in {} seconds".format(int(row['next_update'] - time.time())))
+                    logger.warning("This issuer has recently tried and failed. Retry it in {} seconds".format(int(row['next_update'] - time.time())))
                     return None
                 else:
                     # 5 minutes is over, retry adding key to keycache
@@ -229,7 +229,6 @@ class KeyCache(object):
         # If it reaches here, then no key was found in the SQL
         # Try checking the issuer (negative cache?)
         try:
-            # TODO: Update force commands
             public_key, cache_timer = self._get_issuer_publickey(issuer, key_id, insecure)
             self.addkeyinfo(issuer, key_id, public_key, cache_timer)
             return public_key
@@ -480,6 +479,11 @@ class KeyCache(object):
         
         res = []
         for issuer, key_id in tokens:
-            updated = self.add_key(issuer, key_id, force_refresh=force_refresh)
-            res.append(updated)
+            try:
+                updated = self.add_key(issuer, key_id, force_refresh=force_refresh)
+                res.append(f"[Issuer: {issuer}, Key_id: {key_id}]: {updated} \n")
+            except Exception as ex:
+                # logger = logging.getLogger("scitokens")
+                # logger.error("Issuer: {0}, Key_id: {1}. Unable to update key: {2}".format(issuer, key_id, str(ex)))
+                res.append(f"[Issuer: {issuer}, Key_id: {key_id}]: Unable to update key: {str(ex)}\n")
         return res
