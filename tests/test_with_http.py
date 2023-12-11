@@ -28,7 +28,7 @@ class TestDeserialization(unittest.TestCase):
     Test the deserialization of a SciToken
     """
 
-    def setUp(self):
+    def setUp(self):        
         with open(TESTS_DIR / 'simple_private_key.pem', 'rb') as key_file:
             self.private_key = serialization.load_pem_private_key(
                 key_file.read(),
